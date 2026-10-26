@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menus de la semaine</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="entete">
+    <h1>🍽️ Menus de la semaine</h1>
+    <p>Renseigne tes critères, valide chaque repas, récupère ta liste de courses.</p>
+  </header>
+
+  <main>
+    <!-- Étape 1 : critères -->
+    <section id="etape-criteres" class="carte">
+      <h2>1. Tes critères</h2>
+      <form id="form-criteres">
+        <div class="grille">
+          <label>Budget de la semaine (€)
+            <input type="number" id="budget" min="10" step="5" value="80" required>
+          </label>
+          <label>Nombre de personnes
+            <input type="number" id="personnes" min="1" max="12" value="2" required>
+          </label>
+          <label>Nombre de jours
+            <input type="number" id="jours" min="1" max="7" value="7" required>
+          </label>
+          <label>Repas par jour
+            <select id="repasParJour">
+              <option value="1">Dîner uniquement</option>
+              <option value="2">Déjeuner + dîner</option>
+            </select>
+          </label>
+          <label>Difficulté maximale
+            <select id="difficulte">
+              <option value="1">Facile</option>
+              <option value="2" selected>Moyen</option>
+              <option value="3">Difficile</option>
+            </select>
+          </label>
+          <label>Durée de préparation max (min)
+            <input type="number" id="temps" min="10" step="5" value="60" required>
+          </label>
+          <label>Calories max par repas (kcal / pers.)
+            <input type="number" id="calories" min="200" step="50" value="700" required>
+          </label>
+        </div>
+
+        <fieldset>
+          <legend>Magasins choisis</legend>
+          <div id="liste-magasins" class="cases"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Aliments préférés</legend>
+          <div class="saisie-chips">
+            <input type="text" id="saisie-preferes" placeholder="ex. poulet, champignons… puis Entrée">
+            <div id="chips-preferes" class="chips"></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Aliments à éviter / allergies</legend>
+          <div id="liste-allergenes" class="cases"></div>
+          <div class="saisie-chips">
+            <input type="text" id="saisie-eviter" placeholder="ex. porc, poivron… puis Entrée">
+            <div id="chips-eviter" class="chips chips-rouge"></div>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="bouton principal">Proposer mes menus</button>
+      </form>
+    </section>
+
+    <!-- Étape 2 : propositions -->
+    <section id="etape-menus" class="carte cache">
+      <div class="titre-ligne">
+        <h2>2. Valide tes repas</h2>
+        <button id="btn-modifier" class="bouton lien">← Modifier les critères</button>
+      </div>
+      <div id="resume-budget" class="resume"></div>
+      <div id="alerte" class="alerte cache"></div>
+      <div id="grille-menus" class="grille-menus"></div>
+      <div class="actions">
+        <button id="btn-tout-valider" class="bouton">Tout valider</button>
+        <button id="btn-courses" class="bouton principal" disabled>Voir la liste de courses</button>
+      </div>
+    </section>
+
+    <!-- Étape 3 : liste de courses -->
+    <section id="etape-courses" class="carte cache">
+      <div class="titre-ligne">
+        <h2>3. Liste de courses</h2>
+        <button id="btn-retour-menus" class="bouton lien">← Retour aux menus</button>
+      </div>
+      <ul id="liste-courses" class="liste-courses"></ul>
+      <div class="actions">
+        <button id="btn-copier" class="bouton">Copier la liste</button>
+        <button id="btn-imprimer" class="bouton">Imprimer</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Détail d'une recette -->
+  <dialog id="modale">
+    <button id="fermer-modale" class="fermer" aria-label="Fermer">✕</button>
+    <div id="contenu-modale"></div>
+  </dialog>
+
+  <footer class="pied">Prix et calories indicatifs (estimations). Photos : TheMealDB, à titre d'illustration.</footer>
+
+  <script src="recettes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
