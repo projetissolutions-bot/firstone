@@ -1,0 +1,29 @@
+# Met à jour prix.js chaque mois avec les prix moyens du Québec (Statistique Canada).
+# Lancement manuel possible : onglet « Actions » > « Mise à jour des prix » > « Run workflow ».
+name: Mise à jour des prix
+
+on:
+  schedule:
+    - cron: "17 12 10 * *" # le 10 de chaque mois (les données StatCan sortent en début de mois)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  maj-prix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Télécharger le tableau 18-10-0245-01 et mettre à jour prix.js
+        run: node outils/maj-prix.js
+      - name: Enregistrer les nouveaux prix
+        run: |
+          if git diff --quiet prix.js; then echo "Aucun changement."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898341+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Prix : mise à jour Statistique Canada"
+          git push

@@ -142,6 +142,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .5); }
 .liste-courses { list-style: none; padding: 0; columns: 2 260px; }
 .liste-courses li { padding: 6px 0; border-bottom: 1px dashed var(--bord); break-inside: avoid; }
 .liste-courses label { flex-direction: row; font-weight: 400; gap: 8px; cursor: pointer; }
+.liste-courses .prix { color: var(--doux); font-style: normal; font-size: .85rem; }
 .liste-courses input:checked + span { text-decoration: line-through; color: var(--doux); }
 
 .pied { text-align: center; color: var(--doux); font-size: .8rem; padding: 10px 16px 30px; }

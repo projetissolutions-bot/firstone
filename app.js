@@ -22,7 +22,7 @@ const contient = (recette, terme) => {
   return recette.ingredients.some(([, , nom]) => normaliser(nom).includes(r)) ||
     normaliser(recette.nom).includes(r) || normaliser(recette.categorie).includes(r);
 };
-const euros = (n) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+const dollars = (n) => n.toLocaleString("fr-CA", { style: "currency", currency: PRIX_DATA.devise });
 const recetteParId = (id) => RECETTES.find((r) => r.id === id);
 
 function sauver() {
@@ -42,7 +42,7 @@ function charger() {
 // ---------- Formulaire ----------
 
 function construireFormulaire() {
-  $("#liste-magasins").innerHTML = MAGASINS.map((m) =>
+  $("#liste-magasins").innerHTML = PRIX_DATA.magasins.map((m) =>
     `<label><input type="checkbox" name="magasin" value="${m.id}"> ${m.nom}</label>`).join("");
   $("#liste-allergenes").innerHTML = ALLERGENES.map((a) =>
     `<label><input type="checkbox" name="allergene" value="${a.id}"> ${a.nom}</label>`).join("");
@@ -102,14 +102,40 @@ function remplirFormulaire(c) {
 
 // ---------- Calculs ----------
 
+// ---------- Prix (prix.js) ----------
+
+// "Pommes de terre" et "pomme de terre" donnent la même clé
+const clePrix = (nom) => normaliser(nom).split(" ").map((m) => (m.length > 3 ? m.replace(/[sx]$/, "") : m)).join(" ");
+const TABLE_PRIX = new Map(Object.entries(PRIX_DATA.ingredients).map(([nom, p]) => [clePrix(nom), p]));
+const UNITES_MASSE = { g: 0.001, kg: 1 };
+const UNITES_VOLUME = { cl: 0.01, L: 1 };
+const UNITES_PLACARD = ["c. à s.", "c. à c."]; // épices, huiles… : considérées comme déjà au placard
+
+// Coût (prix moyen Québec) d'une quantité d'ingrédient, ou null si non chiffrable
+function coutIngredient(q, u, nom) {
+  const p = TABLE_PRIX.get(clePrix(nom));
+  if (q === null || UNITES_PLACARD.includes(u)) return 0;
+  if (!p) return null;
+  const masse = u in UNITES_MASSE ? q * UNITES_MASSE[u] : u in UNITES_VOLUME ? q * UNITES_VOLUME[u] : null; // 1 L ≈ 1 kg
+  const pieces = masse === null ? q : null;
+  let quantite = null;
+  if (p.par === "unité") quantite = pieces ?? (p.poids ? masse / p.poids : null);
+  else quantite = masse ?? (p.poids ? pieces * p.poids : null);
+  return quantite === null ? null : quantite * p.prix;
+}
+
+// Coût d'une recette pour 4 personnes, au prix moyen
+const coutRecetteBase = (recette) =>
+  recette.ingredients.reduce((s, [q, u, nom]) => s + (coutIngredient(q, u, nom) || 0), 0);
+
 // Coefficient moyen des magasins choisis (1 si aucun)
 function coefMagasins(c) {
-  const choisis = MAGASINS.filter((m) => c.magasins.includes(m.id));
+  const choisis = PRIX_DATA.magasins.filter((m) => c.magasins.includes(m.id));
   if (!choisis.length) return 1;
   return choisis.reduce((s, m) => s + m.coef, 0) / choisis.length;
 }
 
-const coutPortion = (recette, c) => recette.cout * coefMagasins(c);
+const coutPortion = (recette, c) => coutRecetteBase(recette) / PERSONNES_BASE * coefMagasins(c);
 const nbRepas = (c) => c.jours * c.repasParJour;
 const plafondPortion = (c) => c.budget / (nbRepas(c) * c.personnes);
 
@@ -255,8 +281,8 @@ function afficherResume() {
   const classe = total > c.budget ? "depasse" : "ok";
   $("#resume-budget").innerHTML =
     `<strong>${valides}/${etat.menus.length}</strong> repas validés · ` +
-    `Coût estimé : <span class="${classe}">${euros(total)}</span> pour un budget de ${euros(c.budget)} · ` +
-    `${c.personnes} pers. · max ${euros(plafondPortion(c))} par portion`;
+    `Coût estimé : <span class="${classe}">${dollars(total)}</span> pour un budget de ${dollars(c.budget)} · ` +
+    `${c.personnes} pers. · max ${dollars(plafondPortion(c))} par portion`;
   $("#btn-courses").disabled = !etat.menus.length || valides < etat.menus.length;
 }
 
@@ -281,7 +307,7 @@ function afficherMenus() {
           <span>⏱ ${r.temps} min</span>
           <span>📊 ${DIFFICULTES[r.difficulte]}</span>
           <span>🔥 ${r.calories} kcal</span>
-          <span>💶 ${euros(coutPortion(r, c) * c.personnes)}</span>
+          <span>💶 ${dollars(coutPortion(r, c) * c.personnes)}</span>
         </div>
         <div class="boutons">
           ${m.valide
@@ -304,7 +330,7 @@ function formaterQte(qte, unite) {
   } else {
     q = Math.ceil(q * 2) / 2; // pièces, cuillères… arrondi au demi supérieur
   }
-  return `${q.toLocaleString("fr-FR")}${unite ? " " + unite : ""}`;
+  return `${q.toLocaleString("fr-CA")}${unite ? " " + unite : ""}`;
 }
 
 function ouvrirDetail(id) {
@@ -321,7 +347,7 @@ function ouvrirDetail(id) {
         <span>⏱ ${r.temps} min</span>
         <span>📊 ${DIFFICULTES[r.difficulte]}</span>
         <span>🔥 ${r.calories} kcal / pers.</span>
-        <span>💶 ${euros(coutPortion(r, c) * c.personnes)} (${euros(coutPortion(r, c))} / pers.)</span>
+        <span>💶 ${dollars(coutPortion(r, c) * c.personnes)} (${dollars(coutPortion(r, c))} / pers.)</span>
       </div>
       <h3>Ingrédients pour ${c.personnes} personne${c.personnes > 1 ? "s" : ""}</h3>
       <ul>${r.ingredients.map(([q, u, nom]) => `<li>${q === null ? "" : "<strong>" + formaterQte(q * ratio, u) + "</strong> "}${nom}${q === null ? " (selon goût)" : ""}</li>`).join("")}</ul>
@@ -350,8 +376,15 @@ function listeCourses() {
 
 function afficherCourses() {
   const lignes = listeCourses();
-  $("#liste-courses").innerHTML = lignes.map((l) =>
-    `<li><label><input type="checkbox"><span>${l.qte === null ? "" : "<strong>" + formaterQte(l.qte, l.unite) + "</strong> "}${l.nom}</span></label></li>`).join("");
+  const coef = coefMagasins(etat.criteres);
+  let total = 0;
+  $("#liste-courses").innerHTML = lignes.map((l) => {
+    const cout = coutIngredient(l.qte, l.unite, l.nom);
+    total += (cout || 0) * coef;
+    const prix = cout ? ` <em class="prix">≈ ${dollars(cout * coef)}</em>` : "";
+    return `<li><label><input type="checkbox"><span>${l.qte === null ? "" : "<strong>" + formaterQte(l.qte, l.unite) + "</strong> "}${l.nom}${prix}</span></label></li>`;
+  }).join("");
+  $("#total-courses").textContent = `Total estimé : ${dollars(total)} (épices et huiles non comptées)`;
   afficherEtape("#etape-courses");
 }
 
@@ -406,6 +439,7 @@ $("#modale").addEventListener("click", (e) => { if (e.target.id === "modale") $(
 
 // ---------- Démarrage ----------
 
+$("#source-prix").textContent = `${PRIX_DATA.source}, mise à jour ${PRIX_DATA.miseAJour}`;
 construireFormulaire();
 const sauvegarde = charger();
 if (sauvegarde?.criteres) {

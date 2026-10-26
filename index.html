@@ -18,8 +18,8 @@
       <h2>1. Tes critères</h2>
       <form id="form-criteres">
         <div class="grille">
-          <label>Budget de la semaine (€)
-            <input type="number" id="budget" min="10" step="5" value="80" required>
+          <label>Budget de la semaine ($ CA)
+            <input type="number" id="budget" min="10" step="5" value="150" required>
           </label>
           <label>Nombre de personnes
             <input type="number" id="personnes" min="1" max="12" value="2" required>
@@ -95,6 +95,7 @@
         <h2>3. Liste de courses</h2>
         <button id="btn-retour-menus" class="bouton lien">← Retour aux menus</button>
       </div>
+      <p id="total-courses" class="resume"></p>
       <ul id="liste-courses" class="liste-courses"></ul>
       <div class="actions">
         <button id="btn-copier" class="bouton">Copier la liste</button>
@@ -109,8 +110,9 @@
     <div id="contenu-modale"></div>
   </dialog>
 
-  <footer class="pied">Prix et calories indicatifs (estimations). Photos : TheMealDB, à titre d'illustration.</footer>
+  <footer class="pied">Prix : <span id="source-prix"></span>. Calories indicatives. Photos : TheMealDB, à titre d'illustration.</footer>
 
+  <script src="prix.js"></script>
   <script src="recettes.js"></script>
   <script src="app.js"></script>
 </body>
